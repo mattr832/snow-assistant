@@ -1,0 +1,790 @@
+You are analyzing Stevens Pass weather data for winter sports enthusiasts (skiing/snowboarding). Your analysis must be STRICTLY DATA-DRIVEN using only the provided information.
+
+═══════════════════════════════════════════════════════════════════════════
+DATA SOURCES PROVIDED
+═══════════════════════════════════════════════════════════════════════════
+
+You have access to the following authoritative data sources:
+
+1. **NOAA Forecast Grid Data** - Hourly/detailed predictions including:
+   - Snowfall amounts (inches) with precise timing
+   - Precipitation amounts and types
+   - Temperature trends (actual, high, low, apparent)
+   - Wind speed, gusts, and direction
+   - Visibility conditions
+   - Humidity and dewpoint
+
+2. **NWAC Avalanche Forecast** - Northwest Avalanche Center safety information:
+   - Link to current avalanche danger ratings by elevation
+   - Essential backcountry safety gear checklist
+   - Terrain selection guidelines and red flags
+   - Important for assessing backcountry skiing/riding conditions
+
+3. **NOAA Area Forecast Discussions (AFD)** - Professional meteorologist analysis from:
+   - OTX (Spokane/East Cascades)
+   - SEW (Seattle/West Cascades)
+   These contain synoptic pattern analysis, model discussions, and forecaster confidence
+
+4. **Powder Poobah Professional Forecast** - Expert Pacific Northwest snow forecaster
+   (See full forecast details in the OFFICIAL DATA section below)
+
+5. **Weather Alerts** - Active warnings, watches, and advisories
+
+═══════════════════════════════════════════════════════════════════════════
+STRICT ANALYSIS RULES
+═══════════════════════════════════════════════════════════════════════════
+
+**CRITICAL - You MUST follow these rules:**
+
+1. **NO ASSUMPTIONS**: Only report what is explicitly stated in the data
+2. **NO SPECULATION**: If data is missing or unclear, state "Data not available" 
+3. **NO FABRICATION**: Do not create snowfall amounts, temperatures, or conditions
+4. **CITE SOURCES**: Reference which data source each insight comes from
+5. **EXACT NUMBERS**: Use precise values from the data (e.g., "4.2 inches" not "around 4 inches")
+6. **POWDER DAY DEFINITION**: Only classify as powder day when data shows 9+ inches in 24 hours
+
+═══════════════════════════════════════════════════════════════════════════
+YOUR ANALYSIS TASK
+═══════════════════════════════════════════════════════════════════════════
+
+Synthesize the data below into a comprehensive winter sports forecast. Your analysis should:
+
+**1. SNOWFALL SUMMARY** (Primary Focus)
+   - Extract ALL snowfall events from NOAA grid data with exact amounts and timing
+   - Identify any 24-hour periods with 9+ inches (powder day threshold)
+   - Note what Powder Poobah says about snowfall - does it align with NOAA?
+   - Report any AFD discussion about precipitation intensity or snow levels
+
+**2. SNOW QUALITY INDICATORS**
+   - Temperature during snow events (cold = dry powder, warm = wet/heavy)
+   - Wind speeds during snowfall (high winds = wind-affected snow)
+   - What does Powder Poobah assess about snow quality?
+   - Any AFD mention of snow ratios, density, or elevation-dependent factors
+
+**3. TIMING & WINDOWS**
+   - IMMEDIATE (Next 48 Hours): Detailed hour-by-hour or period-by-period breakdown
+   - EXTENDED (3-7 Days): Day-by-day summary of conditions
+   - When does snow start/stop according to grid data?
+   - Weekday vs weekend breakdown from the forecast periods
+   - What timing does Powder Poobah emphasize?
+   - Any AFD discussion about system timing or confidence
+
+**4. MOUNTAIN CONDITIONS**
+   - Wind: Exact speeds/gusts from grid data - impact on riding conditions
+   - Visibility: Actual values from grid data
+   - Temperature trends: Actual highs/lows from grid data
+   - What does Powder Poobah say about mountain conditions?
+
+**5. HAZARDS & SAFETY CONDITIONS**
+   - Active alerts from weather data
+   - NWAC avalanche forecast link and key safety information
+   - Backcountry vs resort considerations (NWAC data does NOT apply to ski areas)
+   - Any AFD mention of hazardous conditions, road closures, chain requirements
+   - What does Powder Poobah warn about?
+
+**6. FORECAST RECONCILIATION** (Critical Analysis)
+   - Compare Powder Poobah's assessment with NOAA grid data
+   - Compare AFD forecaster discussion with grid data
+   - Where do sources agree? Where do they differ?
+   - Which sources show higher/lower confidence?
+
+**7. WINTER SPORTS BOTTOM LINE**
+   - NEAR-TERM OUTLOOK (Next 48 Hours): Specific riding recommendations
+   - EXTENDED OUTLOOK (3-7 Days): Multi-day conditions and best opportunities
+   - Summarize rideable conditions based strictly on the data
+   - Highlight best days/windows according to the data
+   - Note any data gaps or uncertainties
+
+═══════════════════════════════════════════════════════════════════════════
+OFFICIAL DATA
+═══════════════════════════════════════════════════════════════════════════
+
+
+======================================================================
+EXPERT CONTEXT: Powder Poobah Professional Snow Forecast
+======================================================================
+
+Post: Dec 11- Record rain and a hint of snow next week!
+Source: https://www.powderpoobah.com/post/dec-11-record-rain-and-a-hint-of-snow-next-week
+
+HIGHLIGHTS:
+Friday: Light rain in the morning
+Saturday: Dry with some sunbreaks possible
+Sunday: Light rain except up to 2" snow late in the day at mid-slopes for Mt. Baker, Silver Mt, and 49 Degrees North
+Monday: Windy and heavy rain
+
+EXTENDED OUTLOOK:
+This is an extended outlook, and the models have not been that accurate lately. Tuesday, expect cooler temps. By Wednesday chance of snow at 4000' (expecting 8"). Next update this Sunday, December 14. Hoping this optimistic outlook continues. What is very encouraging is looking toward Christmas, bringing very cold conditions. Interesting that all models have consistently shown this trend. We'll see if this trend continues and how much snow we get.
+
+======================================================================
+
+📍 **Location: Stevens Pass - Tye Mill (STS54)**
+   Coordinates: 47.7462°N, -121.0859°W
+   Elevation: 5180 ft
+   Nearest City: Skykomish, WA
+   Description: 
+   Forecast Office (WFO): OTX (Seattle/Tacoma)
+   Grid ID: OTX
+   Timezone: America/Los_Angeles
+
+🌡️ **Forecast Periods** (14 periods available):
+  • Tonight: Mostly Cloudy then Light Rain (36°F, 6 mph)
+  • Sunday: Light Rain (40°F, 5 mph)
+  • Sunday Night: Rain (38°F, 6 mph)
+  • Monday: Rain (44°F, 6 to 12 mph)
+  • Monday Night: **Rain And Snow** (33°F, 8 to 12 mph)
+  • Tuesday: **Rain And Snow** (35°F, 6 to 10 mph)
+  • Tuesday Night: **Rain And Snow** (25°F, 10 to 21 mph)
+  • Wednesday: **Heavy Snow** (29°F, 7 to 21 mph)
+  • Wednesday Night: **Heavy Snow** (26°F, 7 mph)
+  • Thursday: **Heavy Snow** (30°F, 7 mph)
+  • Thursday Night: **Heavy Snow** (25°F, 9 mph)
+  • Friday: **Heavy Snow** (29°F, 8 mph)
+  • Friday Night: **Heavy Snow** (24°F, 8 mph)
+  • Saturday: **Snow** (28°F, 7 mph)
+
+================================================================================
+NWAC AVALANCHE FORECAST - STEVENS PASS
+================================================================================
+
+ZONE: Section not found in page content  
+ISSUED: Section not found in page content  
+EXPIRES: Section not found in page content  
+FORECASTER: Section not found in page content  
+
+DANGER RATINGS:  
+Upper: Section not found in page content  
+Middle: Section not found in page content  
+Lower: Section not found in page content  
+
+THE BOTTOM LINE:  
+Section not found in page content
+
+FORECAST DISCUSSION:  
+Section not found in page content
+
+--------------------------------------------------------------------------------
+AVALANCHE SAFETY REMINDERS
+--------------------------------------------------------------------------------
+
+Essential Safety Gear (Backcountry):
+  ✓ Avalanche beacon (check batteries before each trip)
+  ✓ Probe (240cm+ recommended)
+  ✓ Shovel (metal blade)
+  ✓ Communication device
+  ✓ First aid kit
+
+Danger Level Reference:
+  1 - Low: Generally safe avalanche conditions
+  2 - Moderate: Heightened avalanche conditions on specific terrain
+  3 - Considerable: Dangerous avalanche conditions, careful evaluation required
+  4 - High: Very dangerous conditions, travel not recommended
+  5 - Extreme: Avoid all avalanche terrain
+
+Red Flags (Turn Around!):
+  🚩 Recent avalanches
+  🚩 Whumpfing (collapsing) sounds
+  🚩 Shooting cracks
+  🚩 Heavy, rapid snowfall (>1 inch/hour)
+  🚩 Rain on snow or significant warming
+  🚩 Strong winds loading slopes
+
+================================================================================
+DISCLAIMER
+================================================================================
+
+This backcountry avalanche information does NOT apply to ski areas
+where avalanche control work is performed. Always check the current
+forecast at https://nwac.us/avalanche-forecast/#stevens-pass before heading into the backcountry.
+
+Support NWAC's life-saving work: https://nwac.us/membership/
+
+================================================================================
+
+
+📊 **Detailed NOAA Grid Forecast Data (Temporal Breakdown)**:
+
+**Snowfall Forecast (inches):**
+  • Mon 12/15 10PM: 0.30"
+  • Tue 12/16 04AM: 0.50"
+  • Tue 12/16 10AM: 0.40"
+  • Tue 12/16 04PM: 1.70"
+  • Tue 12/16 10PM: 7.50"
+  • Wed 12/17 04AM: 3.80"
+  • Wed 12/17 10AM: 3.10"
+  • Wed 12/17 04PM: 2.70"
+  • Wed 12/17 10PM: 3.50"
+  • Thu 12/18 04AM: 3.70"
+  • Thu 12/18 10AM: 5.80"
+  • Thu 12/18 04PM: 4.90"
+  • Thu 12/18 10PM: 2.50"
+  • Fri 12/19 04AM: 2.20"
+  • Fri 12/19 10AM: 3.50"
+  • Fri 12/19 04PM: 3.40"
+  • Fri 12/19 10PM: 2.00"
+  • Sat 12/20 04AM: 2.20"
+  • Sat 12/20 10AM: 2.80"
+
+**Precipitation Forecast (inches):**
+  • Sun 12/14 04AM: 0.15"
+  • Sun 12/14 10PM: 0.30"
+  • Mon 12/15 04AM: 0.81"
+  • Mon 12/15 10AM: 0.56"
+  • Mon 12/15 04PM: 0.31"
+  • Mon 12/15 10PM: 0.27"
+  • Tue 12/16 04AM: 0.34"
+  • Tue 12/16 10AM: 0.61"
+  • Tue 12/16 04PM: 0.92"
+  • Tue 12/16 10PM: 0.99"
+  • Wed 12/17 04AM: 0.36"
+  • Wed 12/17 10AM: 0.28"
+  • Wed 12/17 04PM: 0.25"
+  • Wed 12/17 10PM: 0.36"
+  • Thu 12/18 04AM: 0.39"
+  • Thu 12/18 10AM: 0.62"
+  • Thu 12/18 04PM: 0.51"
+  • Thu 12/18 10PM: 0.25"
+  • Fri 12/19 04AM: 0.21"
+  • Fri 12/19 10AM: 0.34"
+  • Fri 12/19 04PM: 0.33"
+  • Fri 12/19 10PM: 0.19"
+  • Sat 12/20 04AM: 0.21"
+  • Sat 12/20 10AM: 0.18"
+
+**Temperature Trends (°F):**
+  • Sat 12/13 02PM: 43.0°F
+  • Sun 12/14 05AM: 37.0°F
+  • Sun 12/14 04PM: 39.0°F
+  • Mon 12/15 11AM: 43.0°F
+  • Mon 12/15 06PM: 38.0°F
+  • Tue 12/16 05AM: 34.0°F
+  • Wed 12/17 12AM: 32.0°F
+  • Wed 12/17 07AM: 26.0°F
+  • Thu 12/18 11AM: 28.0°F
+  • Fri 12/19 12AM: 28.0°F
+  • Fri 12/19 12PM: 28.0°F
+  • Sat 12/20 03AM: 26.0°F
+  • Sat 12/20 01PM: 28.0°F
+
+**Wind Conditions:**
+  • Sat 12/13 02PM: 3.7 mph, gusts 11.1 mph from 210°
+  • Tue 12/16 01AM: 14.8 mph, gusts 16.7 mph from 240°
+  • Wed 12/17 04PM: 11.1 mph, gusts 31.5 mph from 240°
+
+
+
+================================================================================
+NWAC AVALANCHE FORECAST - STEVENS PASS
+================================================================================
+
+ZONE: Section not found in page content  
+ISSUED: Section not found in page content  
+EXPIRES: Section not found in page content  
+FORECASTER: Section not found in page content  
+
+DANGER RATINGS:  
+Upper: Section not found in page content  
+Middle: Section not found in page content  
+Lower: Section not found in page content  
+
+THE BOTTOM LINE:  
+Section not found in page content
+
+FORECAST DISCUSSION:  
+Section not found in page content
+
+--------------------------------------------------------------------------------
+AVALANCHE SAFETY REMINDERS
+--------------------------------------------------------------------------------
+
+Essential Safety Gear (Backcountry):
+  ✓ Avalanche beacon (check batteries before each trip)
+  ✓ Probe (240cm+ recommended)
+  ✓ Shovel (metal blade)
+  ✓ Communication device
+  ✓ First aid kit
+
+Danger Level Reference:
+  1 - Low: Generally safe avalanche conditions
+  2 - Moderate: Heightened avalanche conditions on specific terrain
+  3 - Considerable: Dangerous avalanche conditions, careful evaluation required
+  4 - High: Very dangerous conditions, travel not recommended
+  5 - Extreme: Avoid all avalanche terrain
+
+Red Flags (Turn Around!):
+  🚩 Recent avalanches
+  🚩 Whumpfing (collapsing) sounds
+  🚩 Shooting cracks
+  🚩 Heavy, rapid snowfall (>1 inch/hour)
+  🚩 Rain on snow or significant warming
+  🚩 Strong winds loading slopes
+
+================================================================================
+DISCLAIMER
+================================================================================
+
+This backcountry avalanche information does NOT apply to ski areas
+where avalanche control work is performed. Always check the current
+forecast at https://nwac.us/avalanche-forecast/#stevens-pass before heading into the backcountry.
+
+Support NWAC's life-saving work: https://nwac.us/membership/
+
+================================================================================
+
+
+======================================================================
+Full AFD Discussion - OTX (Spokane/East Cascades)
+Issued: 2025-12-14T05:33:00+00:00
+======================================================================
+
+000
+FXUS66 KOTX 140533
+AFDOTX
+
+Area Forecast Discussion
+National Weather Service Spokane WA
+933 PM PST Sat Dec 13 2025
+
+.KEY MESSAGES...
+
+- Dry conditions and decreasing river levels through Sunday.
+
+- Rain and high mountain snow Monday into Tuesday to bring 
+  additional river rises and mud and rock slide concerns to 
+  Cascades and Idaho Panhandle.
+
+- High winds possible Tuesday Night into Wednesday. A 30-60%
+  chance for widespread wind gusts of greater than 50 mph.
+
+- High confidence for heavy mountain snow impacting the Cascades
+  starting Wednesday morning. 70% chance of 3 feet or more of 
+  snow at Stevens Pass through Friday afternoon.
+
+&&
+
+.SYNOPSIS...
+Drier weather is expected for this weekend with decreasing river 
+levels. Next week, another very active weather pattern moves
+through the forecast area. Rain and high mountain snow Monday 
+into Tuesday will bring additional river rises with mud and rock
+slide concerns in steep terrain of the Cascades and Idaho 
+Panhandle. Very windy conditions will then develop Tuesday Night
+into Wednesday, along with the return of mountains snow. Heavy
+mountain snow in the Cascades is expected mid to late week. 
+
+&&
+
+.DISCUSSION...
+...VERY ACTIVE WEATHER PATTERN NEXT WEEK WITH RENEWED FLOODING 
+CONCERNS FOR CASCADES AND NORTH ID PANHANDLE MONDAY INTO 
+TUESDAY, POSSIBLE HIGH WINDS TUESDAY NIGHT INTO WEDNESDAY, AND 
+HEAVY MOUNTAIN SNOW FOR THE CASCADES WEDNESDAY THROUGH FRIDAY...
+
+Today through Sunday afternoon: A welcome break from cloud cover and 
+precipitation will last through tomorrow afternoon. Temperatures 
+remain much warmer than normal for this time of year, with highs 
+today and tomorrow expected in the high 40s/early 50s. These values 
+are 15-20 degrees higher than normal. 
+
+Sunday evening through Wednesday: By Sunday evening, another active 
+weather pattern makes its entrance as an atmospheric river moves 
+through the state of Washington. Another plume of warm moisture 
+comes through, raising PWATs across the forecast area from 90-100% 
+to 250-300% of normal. Alongside ensemble PWATs, Enhanced Forecast 
+Index values show anomalously high chances for temperatures (through 
+midweek), rainfall, and strong winds, which will be discussed below. 
+Temperatures for this first wave remain warmer than usual, and thus 
+snow levels remain high on Sunday and Monday, with snow being 
+confined to highest mountain elevations. By Tuesday, lower heights 
+will start to move in ahead of an upper level low, dropping snow 
+levels. On Wednesday, this upper level low will move through, and 
+mountain passes will begin seeing accumulating snow. 
+
+Rainfall: Because of antecedent conditions from the multiple 
+atmospheric rivers that moved through last week, hydrologic impacts 
+will continue to be seen. Multiple river forecast points in Chelan 
+County including Stehekin River and the Wenatchee River show a 
+forecasted increase in streamflows, either heading back into flood 
+stage or coming close to it. Rain totals at the mountain crest to 
+the upper river valleys (roughly 3000 feet and above) will total 
+nearly 3-4 inches. NBM probabilities show Leavenworth has a 40% 
+chance of seeing 3 or more inches of rain through early Wednesday 
+morning. In the Idaho Panhandle, rain amounts of 1.5-1.75 inches of 
+rain will fall, resulting in an uptick in streamflows for the Coeur 
+d'Alene river as well. Chances for upcoming hydrologic headlines 
+are increasing. 
+
+Snowfall: As the trough off coast moves into the state of Washington 
+on Wednesday, colder air will be advected into the area, lowering 
+snow levels and bringing accumulating snow to mountain passes along 
+the Cascades and Idaho Panhandle. With this second system, snowfall 
+will be heavy and continuous. NBM probabilities show Stevens Pass 
+has a 40% chance of seeing 2 feet of snow or more through early 
+Wednesday morning. Blewett and Lookout Passes have a 20-40% chance 
+of seeing 6 or more inches of snow during this time. Bottom line: 
+expect wintry driving conditions and prepare accordingly, as roads 
+may be slick. 
+
+High Winds: Impacts to driving will be further hindered Tuesday 
+night through Wednesday morning as strong westerly winds move 
+through. A surface low dropping into southern Alberta will deepen, 
+increasing the surface pressure gradient across the state. Right 
+now, deterministic wind forecasts show westerly 850 mb winds 50-
+65kts Tuesday into Wednesday. With cold air advection making mixing 
+more likely, wind gusts at the surface will be strong. Areas that 
+will see the highest wind gusts include the Wenatchee, Waterville 
+Plateau, Spokane, basin, ID/WA Palouse, and Lewiston/Pullman areas. 
+NBM probabilities are currently showing a 40% chance and higher of 
+sustained wind speeds 25-30 mph. Many of these same areas have a 25-
+35% chance of seeing wind gusts 55 mph or higher. A notable 
+exception is Lewiston/Pullman, with a 50% chance of 55+ mph wind 
+gusts. Wind headlines will almost certainly be needed if models 
+continue showing such strong winds Tuesday night into Wednesday 
+afternoon. 
+
+Thursday through Friday: Snow will continue in earnest at mountain 
+passes on Thursday, accumulating further. Blewett and Lookout Passes 
+have a 30-40% chance of seeing an additional foot of snow through 
+Friday afternoon. Stevens Pass will see considerably higher totals, 
+with a 77% chance of seeing 3 feet of snow or more through Friday 
+afternoon. Winter weather headlines will likely be needed mid to 
+late week. Bottom line, expect another impactful week of weather, 
+especially to mountain and foothill areas. 
+
+Saturday through Sunday: Clusters overwhelmingly show continued low 
+heights and another trough moving through the PNW next weekend and 
+into the beginning of next week. This will result in continued 
+chances for the active weather pattern to continue. The Climate 
+Prediction Center's 8-14 Day Outlook also shows signals of a 
+continued active weather pattern, with increased chances for below 
+normal temperatures and above normal precipitation. /AS
+
+&&
+
+.AVIATION...
+06Z TAFs: Light winds and VFR conditions will prevail for most
+of the region. A potential exception will be KMWH, which has 
+a 30% chance of fog development between 10Z and 18Z. Clear skies
+in the lee of the Cascades will allow for efficient radiational
+cooling, but unlike KEAT, KMWH is far enough east that 
+downslope winds may not dry out the boundary layer enough to 
+inhibit fog development.
+
+.FORECAST CONFIDENCE AND/OR ALTERNATE SCENARIOS: High confidence
+in VFR conditions for all sites except for KMWH over the next 24
+hours. Low confidence in fog impacting KMWH. /Fewkes
+
+-----------------------
+
+Confidence descriptors:
+Low - Less than a 30 percent chance
+Moderate - 30 to 70 percent chance
+High - Greater than a 70 percent chance
+
+For additional probabilistic information for NWS Spokane
+airports,please refer to the Aviation Dashboard on our 
+webpage: https:/www.weather.gov/otx/avndashboard
+
+&&
+
+.Preliminary Point Temps/PoPs...
+Spokane        35  48  41  54  40  50 /   0  20  20 100  60  50 
+Coeur d'Alene  36  48  41  52  40  48 /   0  20  30 100  80  70 
+Pullman        36  50  41  50  41  51 /   0  10  10  90  80  60 
+Lewiston       39  55  43  56  46  56 /   0   0   0  70  60  40 
+Colville       32  44  35  49  33  46 /   0  20  50 100  50  50 
+Sandpoint      35  44  38  48  38  46 /   0  30  50 100  90  80 
+Kellogg        40  50  43  49  40  46 /   0  20  20 100  90  90 
+Moses Lake     34  45  38  56  39  53 /   0  20  20  70  10  30 
+Wenatchee      39  49  42  53  40  49 /   0  10  40  90  40  60 
+Omak           36  47  38  48  34  45 /   0  10  40  90  30  50 
+
+&&
+
+.OTX WATCHES/WARNINGS/ADVISORIES...
+WA...None.
+ID...None.
+
+&&
+
+$$
+
+
+
+======================================================================
+Full AFD Discussion - SEW (Seattle/West Cascades)
+Issued: 2025-12-14T04:08:00+00:00
+======================================================================
+
+000
+FXUS66 KSEW 140408
+AFDSEW
+
+Area Forecast Discussion
+National Weather Service Seattle WA
+808 PM PST Sat Dec 13 2025
+
+
+.UPDATE...Upper-level ridge axis is now well east of the
+forecast area as mostly dry conditions remain. However, a weak 
+front offshore will bring a shot of light rain and showers 
+starting late tonight into Sunday. This feature won't be 
+impactful but, it'll open up the pattern for the next 
+atmospheric river to arrive Sunday night into Monday. Additional
+rises on area rivers are favored with more detail provided 
+below in the hydro section. Overnight lows tonight will bottom 
+out between the mid 40s to near 50 F. The previous discussion is
+below along with an updated aviation section. 
+
+
+&&
+
+.SYNOPSIS...
+River flooding continues across areas of western Washington.
+Drier conditions will persist through tonight, before a weak 
+front crosses the region early Sunday. A stronger system will 
+follow Monday into Tuesday, bringing heavier precipitation and 
+strong winds for some areas. A deeper trough will bring cooler 
+air and the potential for heavy mountain snow Tuesday night into 
+Wednesday. Conditions remain unsettled heading into late week
+with additional rounds of lowland rain and mountain snow
+expected.
+
+&&
+
+.SHORT TERM /TONIGHT THROUGH SUNDAY NIGHT/... 
+Most areas of fog have scattered across the region this 
+afternoon with latest satellite imagery showing high cloud 
+cover streaming in overhead. Conditions will generally remain 
+dry across the region through tonight with high pressure
+situated over the region. 
+
+The break in the weather will remain short-lived, however, as 
+the ridge flattens into Sunday and the next weak frontal system
+approaches western Washington. Rain will move inland by early 
+Sunday, but expect overall amounts to remain rather light, with 
+most areas only expected to receive a few hundredths to a tenth 
+of an inch across the interior and a few tenths along the coast.
+Snow levels will remain rather high- generally between 6000-8000
+ft - so rainfall amounts in the mountains are generally expected
+to range from a quarter of an inch to an inch in spots, but are
+not expected to bring additional impacts at this time.
+
+14
+
+&&
+
+.LONG TERM /MONDAY THROUGH SATURDAY/... 
+Models remain consistent with regards to next atmospheric river
+system getting into full swing early Monday morning and bringing
+another round of significant rainfall throughout the day. QPF 
+amounts with this particular system are lower than with the 
+prior AR with lowland rainfall amounts generally in the half-
+inch to three- quarters of an inch. The problem arises when 
+considering the impacts this new rainfall may have on already 
+existing conditions from prior AR. Needless to say, flooding due
+to already elevated river levels and landslides due to already 
+saturated ground top that list. However, this is both not as bad
+as it appears to be and just as bad as it appears to be. To 
+cover the first part of that statement, precip amounts favor 
+falling mostly in the first half of the day, tapering off in the
+afternoon and evening...even though PoPs throughout the day 
+remain high. Making the situation as bad as it appears, or 
+perhaps worse, is the follow-up frontal system Tuesday, drawing 
+in a much more significant slug of moisture into the area. This 
+will result in lowland rainfall amounts of 0.75 inches on the 
+low end and as high as 1.50 inches on the high end. The 
+cumulative effects of Monday and Tuesday will certainly compound
+already existing issues over the area. Lastly, winds during the
+day on Monday will be elevated with most locations in the CWA 
+becoming breezy to locally windy. Locations more prone to higher
+wind speeds, especially along the coast, the San Juans and the 
+NW interior may see winds approach wind advisory criteria, but 
+that risk will need to be evaluated once this system enters the 
+near term time frame.
+
+Switching gears to higher elevations, snow levels remain high Monday 
+before starting to lower Monday night and into Tuesday. With the 
+aforementioned incoming moisture for Tuesday, accumulating snowfall 
+will be an issue as snow levels by Tuesday night will dip down to 
+pass level. Winter weather headlines may be needed if guidance 
+remains consistent.
+
+Wednesday brings a weak ridge, but unfortunately is not strong 
+enough scour all of the moisture out of the area. As such, this will 
+keep at least showers in the forecast...even though, thankfully, QPF 
+values remain low during this time. A broad upper level trough over 
+the northwestern Canadian coast will keep weather over W WA active 
+for the remainder of the forecast period, continuing to cycle 
+moisture into the area and keeping the latter end of the forecast 
+wet.
+
+18
+
+&&
+
+.AVIATION... 
+Southwesterly flow aloft as an upper ridge begins to exit the area. 
+Surface winds largely light and variable overnight before turning 
+southerly at most terminals early Sunday morning with speeds 
+increasing to 5 to 10 kts for much of the morning and early 
+afternoon. Additional speed increases are expected for Sunday 
+evening as an incoming front approaches the area.
+
+Another evening of mixed cigs over W WA. Most terminals seeing VFR 
+conditions however northern terminals and those along the west side 
+of the Sound and along the Strait seeing MVFR to IFR conditions. 
+Cigs lowering overnight, but the area looks to remain mixed: coastal 
+locations will lower into MVFR while terminals around Puget Sound 
+will be a mix of VFR to MVFR conditions. IFR conditions are possible 
+for locations more prone to lower cigs. Mixing associated with a 
+weak passing front Sunday afternoon may allow for some improvement 
+to cigs, but any such improvement will only be slight as rain is 
+expected to move into the area by the end of the TAF period.
+
+KSEA...VFR conditions tonight into early Sunday morning. A weak 
+front will begin to approach the terminal around 11Z, bringing some 
+light showers with it. This will be enough to drag cigs to MVFR for 
+the remainder of the morning before some improvement back to 
+borderline VFR in the afternoon. Winds will remain southerly with 
+speeds generally 4-8 kts for the TAF period.
+
+18
+
+&&
+
+.MARINE...
+A weak frontal system will cross the waters through early Sunday, 
+generating SCA winds and seas above 10 feet across the far northern 
+coastal waters. Seas will remain between 6 to 9 feet elsewhere.
+
+A stronger system will arrive late Sunday night into Monday, which 
+will bring stronger winds to the outer waters that will likely reach 
+Gale force. This system will also bring larger swells to the region, 
+with waves reaching 15 to 20 feet early next week.
+
+Seas will remain elevated throughout the rest of next week as 
+another series of systems crosses the area waters. There will likely 
+be another round of wind and sea headlines, with winds potentially 
+reaching Gale force across most area waters mid week.
+
+15
+
+&&
+
+.HYDROLOGY...
+Rivers continue to recede this afternoon as western Washington gets 
+a break from the wet weather. Even the lower reaches of the rivers 
+will approach or lower below flood stage later today into tonight. 
+The exceptions to this will be the lower reaches of the Chehalis 
+river which will not fall below flood stage until Sunday from Porter 
+down to Grays Harbor, and the lower reaches of the Skagit river 
+which will recede to near flood stage by Monday morning. 
+
+Rivers will be on the rise again later Monday into Tuesday with 
+another atmospheric river taking aim at Western Washington.
+Rainfall amounts to 3 to 5 inches Monday through Wednesday in the 
+mountains are forecast. Another round of river flooding will occur 
+with the atmospheric river but at this time, with the Skagit and 
+Snohomish Rivers forecast to reach major flooding once again by 
+midweek. A Flood Watch has been issued for much of western 
+Washington Monday morning through Thursday evening for potential 
+incoming river flooding, urban flooding, and small stream flooding.
+
+With very wet antecedent soil conditions, the landslide threat 
+remains high across the region. Potential is also elevated for 
+debris flows over area burn scars, which continue to be monitored.
+
+The threat of urban flooding will increase again later Monday into 
+Tuesday. Small stream flooding, as well as areas with poor drainage, 
+will pose a risk of localized nuisance flooding and ponding on 
+roadways later Monday into Wednesday. 
+
+Felton/15
+
+&&
+
+.SEW WATCHES/WARNINGS/ADVISORIES...
+WA...Flood Watch from Monday morning through Thursday afternoon for 
+     Cascades of Pierce and Lewis Counties-Cascades of 
+     Snohomish and Northern King Counties-Cascades of Southern 
+     King County-Cascades of Whatcom and Skagit Counties-City 
+     of Seattle-Downtown Everett / Marysville Area-Eastern 
+     Kitsap County-Eastern Strait of Juan de Fuca-Eastside-
+     Foothills and Valleys of Central King County-Foothills 
+     and Valleys of Pierce and Southern King Counties-
+     Foothills and Valleys of Snohomish and Northern King 
+     Counties-Foothills and Valleys of Thurston and Lewis 
+     Counties-Foothills and Valleys of the North Cascades-
+     Foothills of the Western and Southern Olympic Peninsula-
+     Grays Harbor County Coast-Lake Crescent Area Including US 
+     101-Lower Chehalis River Valley-Lowlands of Lewis and 
+     Southern Thurston Counties-Lowlands of Pierce and 
+     Southern King Counties-Lowlands of Western Skagit and 
+     Northwestern Snohomish Counties-Lowlands of Western 
+     Whatcom County-Middle Chehalis River Valley-Northern Hood 
+     Canal-Northern Washington Coast-Olympia and Southern 
+     Puget Sound-Olympics-Port Townsend Area-Shoreline / 
+     Lynnwood / South Everett Area-Southern Hood Canal-Western 
+     Strait of Juan de Fuca-Willapa and Black Hills.
+
+PZ...Small Craft Advisory until 10 PM PST Sunday for Coastal Waters 
+     From Cape Flattery To James Island 10 To 60 Nm-Coastal 
+     Waters From Cape Flattery To James Island Out 10 Nm-
+     Coastal Waters From James Island To Point Grenville 10 To 
+     60 Nm-Coastal Waters From James Island To Point Grenville 
+     Out 10 Nm-Coastal Waters From Point Grenville To Cape 
+     Shoalwater 10 To 60 Nm-Coastal Waters From Point 
+     Grenville To Cape Shoalwater Out 10 Nm.
+
+     Gale Warning from 10 PM Sunday to 4 PM PST Monday for Coastal 
+     Waters From Cape Flattery To James Island 10 To 60 Nm-
+     Coastal Waters From Cape Flattery To James Island Out 10 
+     Nm-Coastal Waters From James Island To Point Grenville 10 
+     To 60 Nm-Coastal Waters From James Island To Point 
+     Grenville Out 10 Nm-Coastal Waters From Point Grenville 
+     To Cape Shoalwater 10 To 60 Nm-Coastal Waters From Point 
+     Grenville To Cape Shoalwater Out 10 Nm.
+
+&&
+
+$$
+
+
+═══════════════════════════════════════════════════════════════════════════
+OUTPUT FORMAT
+═══════════════════════════════════════════════════════════════════════════
+
+Structure your response as:
+
+**SNOWFALL FORECAST**
+[Exact amounts, timing, and classification from data]
+
+**SNOW QUALITY & CONDITIONS**  
+[Temperature, wind, visibility from data sources]
+
+**NEAR-TERM FORECAST (Next 48 Hours)**
+[Detailed period-by-period or hour-by-hour breakdown of conditions, snowfall, and riding opportunities]
+
+**EXTENDED FORECAST (Days 3-7)**
+[Day-by-day summary of conditions and snow potential]
+
+**AVALANCHE & SAFETY CONDITIONS**
+[NWAC avalanche forecast link, backcountry safety reminders, and essential gear]
+
+**HAZARDS & ADVISORIES**
+[Weather warnings, pass conditions from alerts/AFD]
+
+**EXPERT INSIGHTS RECONCILIATION**
+[How Powder Poobah aligns with or differs from NOAA data]
+
+**BOTTOM LINE FOR WINTER SPORTS**
+- Near-Term (48 Hours): [Specific actionable recommendations]
+- Extended (3-7 Days): [Multi-day outlook and best opportunities]
+
+═══════════════════════════════════════════════════════════════════════════
+
+**TONE**: Professional, factual, enthusiastic about powder but honest about conditions
+**AUDIENCE**: Experienced winter sports enthusiasts who value accurate data
+**LENGTH**: Maximum 1300 words
+**REMINDER**: Use ONLY the data provided above. Do not assume or fabricate information.
