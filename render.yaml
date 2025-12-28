@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: snow-assistant
+    runtime: python
+    buildCommand: pip install uv && uv sync --frozen
+    startCommand: uv run chainlit run app.py --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: LLM_PROVIDER
+        value: openai
+      - key: OPENAI_API_KEY
+        sync: false  # Will be set in Render dashboard
+      - key: OPENAI_MODEL_NAME
+        value: gpt-4o-mini
+      - key: LOG_LEVEL
+        value: INFO
+      - key: PYTHON_VERSION
+        value: 3.11.0

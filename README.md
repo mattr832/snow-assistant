@@ -158,7 +158,62 @@ Edit `config.py` to adjust:
 - `max_tokens`: Response length limit
 - `num_ctx`: Context window size (Ollama)
 
-## 📊 Data Sources
+## � Deployment
+
+### Render (Recommended - No Docker Required)
+
+**1. Connect Repository**
+- Go to [Render Dashboard](https://dashboard.render.com/)
+- Click "New +" → "Blueprint"
+- Connect your GitHub repository
+- Render will detect `render.yaml` automatically
+
+**2. Set Environment Variables**
+In the Render dashboard, add:
+```
+OPENAI_API_KEY=your-actual-key-here
+```
+
+**3. Deploy**
+- Click "Apply" to deploy
+- Render will install dependencies with `uv` and start the app
+- Your app will be live at `https://your-app-name.onrender.com`
+
+**Manual Web Service Setup (Alternative)**
+If not using `render.yaml`:
+1. New Web Service → Connect repository
+2. **Build Command**: `pip install uv && uv sync --frozen`
+3. **Start Command**: `uv run chainlit run app.py --host 0.0.0.0 --port $PORT`
+4. Add environment variables in dashboard
+5. Deploy
+
+**Cost**: Free tier available (app sleeps after inactivity), paid plans from $7/month for always-on.
+
+### Other Platforms
+
+**Heroku**
+```bash
+# Add Procfile to repo
+echo "web: uv run chainlit run app.py --host 0.0.0.0 --port \$PORT" > Procfile
+
+# Deploy
+heroku create your-app-name
+heroku config:set OPENAI_API_KEY=your-key
+git push heroku main
+```
+
+**VPS (DigitalOcean, Hetzner, etc.)**
+```bash
+# On your server
+git clone https://github.com/yourusername/snow-assistant.git
+cd snow-assistant
+uv sync
+uv run chainlit run app.py --host 0.0.0.0 --port 8000
+
+# Set up systemd service + reverse proxy (Caddy/Nginx) for production
+```
+
+## �📊 Data Sources
 
 ### NOAA Weather API
 - **Endpoint**: `api.weather.gov`
