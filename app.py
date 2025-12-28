@@ -178,22 +178,114 @@ async def main(message: cl.Message):
         chat_history = cl.chat_context.to_openai()
         logger.info(f"Chat history has {len(chat_history)} messages")
         
-        # Check Ollama connection
-        if not agent.llm.check_ollama_connection():
-            await cl.Message(
-                content="⚠️ **Error**: Cannot connect to Ollama at http://localhost:11434\n\nPlease start Ollama in another terminal:\n```\nollama serve\n```\n\nThen try your message again.",
-                metadata={"timestamp": time.time(), "type": "error"}
-            ).send()
+        # Check LLM connection
+        if not agent.llm.check_connection():
+            provider = agent.llm.provider
+            if provider == "ollama":
+                await cl.Message(
+                    content="⚠️ **Error**: Cannot connect to Ollama at http://localhost:11434\n\nPlease start Ollama in another terminal:\n```\nollama serve\n```\n\nThen try your message again.",
+                    metadata={"timestamp": time.time(), "type": "error"}
+                ).send()
+            elif provider == "openai":
+                await cl.Message(
+                    content="⚠️ **Error**: Cannot connect to OpenAI API\n\nPlease check your OPENAI_API_KEY in .env file",
+                    metadata={"timestamp": time.time(), "type": "error"}
+                ).send()
             return
         
         # Create a message to display the response
-        response_message = cl.Message(content="🔄 Processing...")
+        response_message = cl.Message(content="")
         await response_message.send()
         
         start_time = time.time()
         
-        # Run the agent with streaming support and chat history
-        final_response = await agent.run_async(message.content, chainlit_message=response_message, chat_history=chat_history)
+        # Create a thread-safe streaming callback
+        # We need this because the LLM runs in a thread pool but we need to call async functions
+        import threading
+        
+        loop = asyncio.get_event_loop()
+        stream_futures = []  # Track all streaming futures
+        stream_errors = []
+        context_error_logged = False  # Track if we've logged context errors
+        futures_lock = threading.Lock()  # Thread-safe access to futures list
+        
+        def stream_callback(token: str):
+            """Thread-safe callback that schedules async streaming"""
+            nonlocal context_error_logged
+            try:
+                # Schedule the coroutine and track the future
+                future = asyncio.run_coroutine_threadsafe(
+                    response_message.stream_token(token),
+                    loop
+                )
+                with futures_lock:
+                    stream_futures.append(future)
+            except Exception as e:
+                error_msg = str(e)
+                with futures_lock:
+                    stream_errors.append(error_msg)
+                # Only log context errors once to avoid spam
+                if ("context" in error_msg.lower() or "chainlit" in error_msg.lower()):
+                    if not context_error_logged:
+                        logger.warning(f"⚠️ Chainlit context not available for streaming (thread pool limitation) - will use fallback")
+                        context_error_logged = True
+                else:
+                    logger.error(f"Stream callback scheduling error: {e}")
+        
+        # Run the agent with async streaming
+        final_response = await agent.run_async(
+            message.content,
+            chat_history=chat_history,
+            stream_callback=stream_callback
+        )
+        
+        # Wait for all streaming to complete before proceeding
+        # Make a copy of futures list to avoid holding lock during wait
+        with futures_lock:
+            futures_to_wait = list(stream_futures)
+            errors_count = len(stream_errors)
+        
+        successful_streams = 0
+        context_errors = 0
+        if futures_to_wait:
+            logger.debug(f"Waiting for {len(futures_to_wait)} streaming operations to complete")
+            for future in futures_to_wait:
+                try:
+                    # Wait for each future with a reasonable timeout
+                    future.result(timeout=5.0)
+                    successful_streams += 1
+                except Exception as e:
+                    # Check if it's a Chainlit context error (streaming from thread pool issue)
+                    error_msg = str(e)
+                    if "context" in error_msg.lower() or "chainlit" in error_msg.lower():
+                        # This is expected when streaming from thread pool - will use fallback
+                        context_errors += 1
+                    else:
+                        logger.error(f"Stream future error: {e}")
+                        with futures_lock:
+                            stream_errors.append(str(e))
+            
+            if successful_streams > 0:
+                logger.debug(f"✓ Streaming complete: {successful_streams}/{len(futures_to_wait)} successful")
+            elif context_errors > 0:
+                logger.info(f"⚠️ Streaming failed due to Chainlit context ({context_errors} tokens) - using fallback")
+            else:
+                logger.warning(f"⚠️ Streaming failed: {len(stream_errors)} errors")
+        
+        # If streaming failed (no successful streams), set content as fallback
+        with futures_lock:
+            total_errors = len(stream_errors)
+            total_futures = len(stream_futures)
+        
+        if successful_streams == 0 and total_futures > 0:
+            # Complete streaming failure - set content as fallback
+            response_message.content = final_response
+            await response_message.update()
+        elif 0 < successful_streams < total_futures:
+            # Partial streaming success - ensure complete content is set
+            logger.info(f"Partial streaming: {successful_streams}/{total_futures} tokens displayed, updating full content")
+            response_message.content = final_response
+            await response_message.update()
         
         elapsed_time = time.time() - start_time
         

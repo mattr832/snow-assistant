@@ -28,13 +28,14 @@ class LocalGPUAgent:
         self.llm = UnifiedLLM()
         self.tools = tools
         self.graph = None
+        self._stream_callback = None
         self._build_graph()
 
     def _build_graph(self):
         """Build the LangGraph workflow"""
         workflow = StateGraph(AgentState)
 
-        # Add nodes
+        # Add nodes (we'll wrap them with callbacks in run_async)
         workflow.add_node("agent", self._agent_node)
         workflow.add_node("tool_use", self._tool_use_node)
         workflow.add_node("end", self._end_node)
@@ -90,7 +91,12 @@ CRITICAL TOOL USAGE RULES:
 
 4. For general questions or conversation, provide your answer directly without any JSON.
 
-5. When you receive tool results (marked as [Tool Result from tool_name]), synthesize the information and present it clearly to the user. DO NOT call the same tool again unless the user explicitly asks for updated information.
+5. Tool chaining guidelines:
+   - When you receive tool results (marked as [Tool Result from tool_name]), first determine if you have enough information to answer the user's question
+   - If the tool results are sufficient, synthesize the information and present it clearly to the user
+   - If additional information from another tool would significantly improve your answer, you may call one more tool
+   - Be efficient: only chain tools when truly necessary to fully answer the question
+   - Avoid calling the same tool repeatedly unless the user asks for updated information
 
 6. Be helpful, conversational, and informative."""
 
@@ -117,9 +123,9 @@ CRITICAL TOOL USAGE RULES:
         
         conversation_text = "\n\n".join(conversation) if conversation else "User: Hello"
         
-        # Check if we just received a tool result - if so, prompt LLM to synthesize it
+        # Check if we just received a tool result - if so, prompt LLM to assess next steps
         if messages and isinstance(messages[-1], ToolMessage):
-            additional_instruction = "\n\nThe tool has returned results above. Please synthesize this information and provide a clear, helpful response to the user. Present the key information in a well-formatted way."
+            additional_instruction = "\n\nThe tool has returned results above. Evaluate if you have sufficient information to answer the user's question:\n- If yes: synthesize the information and provide a clear, helpful response\n- If no: call ONE additional tool that would help complete the answer\nPrioritize efficiency - only chain tools when necessary."
             prompt = f"{system_prompt}\n\n{conversation_text}{additional_instruction}\n\nAssistant:"
         else:
             prompt = f"{system_prompt}\n\n{conversation_text}\n\nAssistant:"
@@ -128,8 +134,28 @@ CRITICAL TOOL USAGE RULES:
         logger.debug(f"📝 PROMPT SENT TO LLM:\n{prompt[:500]}...")
         
         response_chunks = []
+        is_tool_call = False
+        
         for chunk in self.llm.generate_stream(prompt):
             response_chunks.append(chunk)
+            
+            # Check if this is a tool call by looking at accumulated text
+            accumulated = "".join(response_chunks).strip()
+            
+            # Detect tool call early (within first few characters)
+            if len(accumulated) > 0 and not is_tool_call:
+                if accumulated[0] == '{':
+                    is_tool_call = True
+                    logger.debug("🔧 Detected tool call - stopping stream to user")
+            
+            # Stream to callback if provided and this is NOT a tool call
+            # Use instance variable self._stream_callback
+            if hasattr(self, '_stream_callback') and self._stream_callback and not is_tool_call:
+                try:
+                    # Call the callback - it handles async internally (creates tasks)
+                    self._stream_callback(chunk)
+                except Exception as e:
+                    logger.error(f"Stream callback error: {e}")
         
         response = "".join(response_chunks)
         
@@ -363,23 +389,21 @@ CRITICAL TOOL USAGE RULES:
         logger.info(f"✓ Final response extracted: {final_response[:100]}...")
         return final_response
 
-    async def run_async(self, user_input: str, chainlit_message: Any = None, chat_history: list = None) -> str:
-        """Run the agent with user input and stream results to Chainlit
+    async def run_async(self, user_input: str, chat_history: list = None, stream_callback=None) -> str:
+        """Run the agent with user input and stream results
         
         Args:
             user_input: User's input message
-            chainlit_message: Optional Chainlit message object to update with streaming results
             chat_history: Optional list of previous messages in OpenAI format
+            stream_callback: Optional async callback function to receive streamed tokens
             
         Returns:
             Final response text
         """
         import asyncio
         
-        try:
-            import chainlit as cl
-        except ImportError:
-            chainlit_message = None
+        # Store stream callback for node execution
+        self._stream_callback = stream_callback
         
         logger.info(f"🚀 Starting agent workflow with input: {user_input}")
         
@@ -416,41 +440,13 @@ CRITICAL TOOL USAGE RULES:
         }
 
         try:
-            # Send status update before starting
-            if chainlit_message:
-                chainlit_message.content = "🧠 Thinking..."
-                await chainlit_message.update()
-            
-            # Run the graph in a thread pool to avoid blocking
+            # Run the graph synchronously in a thread pool to avoid blocking the event loop
+            # The streaming happens via callback during LLM generation
             loop = asyncio.get_event_loop()
+            result = await loop.run_in_executor(None, self.graph.invoke, initial_state)
             
-            # Create a task to periodically update status
-            async def update_status():
-                """Periodically update status while processing"""
-                start = asyncio.get_event_loop().time()
-                while True:
-                    await asyncio.sleep(3)
-                    if chainlit_message:
-                        elapsed = int(asyncio.get_event_loop().time() - start)
-                        chainlit_message.content = f"⏳ Processing... ({elapsed}s)"
-                        await chainlit_message.update()
-            
-            # Start status update task
-            status_task = asyncio.create_task(update_status())
-            
-            try:
-                # Run the blocking graph.invoke in a thread pool
-                result = await loop.run_in_executor(None, self.graph.invoke, initial_state)
-                
-                # Store the result state for later access (e.g., for plot generation)
-                self.last_result_state = result
-            finally:
-                # Cancel status updates
-                status_task.cancel()
-                try:
-                    await status_task
-                except asyncio.CancelledError:
-                    pass
+            # Store the result state for later access (e.g., for plot generation)
+            self.last_result_state = result
             
             # Extract final response - look for the last AIMessage (excluding welcome messages)
             final_response = None
@@ -478,20 +474,14 @@ CRITICAL TOOL USAGE RULES:
                 final_response = "No response generated"
             
             logger.info(f"✓ Final response extracted: {final_response[:150]}...")
-            
-            # Update Chainlit message with the final response
-            if chainlit_message:
-                chainlit_message.content = final_response
-                await chainlit_message.update()
-            
             return final_response
             
         except Exception as e:
             logger.error(f"Error during agent execution: {e}", exc_info=True)
-            if chainlit_message:
-                chainlit_message.content = f"❌ Error: {str(e)}"
-                await chainlit_message.update()
             raise
+        finally:
+            # Always clear stream callback to prevent leaks
+            self._stream_callback = None
 
 
 if __name__ == "__main__":

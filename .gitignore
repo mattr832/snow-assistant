@@ -1,1 +1,5 @@
 .env
+.files/*
+analysis_prompts/*
+__pycache__/*
+.chainlit/*
