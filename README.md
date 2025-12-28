@@ -9,7 +9,7 @@ AI-powered snow forecast analyst for Stevens Pass, built with LangChain, LangGra
 ## 🎯 Features
 
 ### 📊 Comprehensive Weather Analysis
-- **Multi-Source Data Integration**: NOAA Weather API, Northwest Avalanche Center (NWAC), Powder Poobah professional forecasts
+- **Multi-Source Data Integration**: NOAA Weather API, Northwest Avalanche Center (NWAC), Powder Poobah professional forecasts, etc.
 - **Interactive Visualizations**: Plotly charts for precipitation, temperature, wind, and visibility
 - **Temporal Breakdown**: Hour-by-hour and day-by-day forecast analysis
 - **Expert Insights**: Reconciles professional forecaster predictions with raw NOAA data
