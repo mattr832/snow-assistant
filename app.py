@@ -8,13 +8,45 @@ import logging
 import time
 import json
 import asyncio
+from scheduler import start_scheduler, stop_scheduler, get_scheduler
 
 logger = logging.getLogger(__name__)
+
+# Track processed Slack events to prevent duplicates
+_processed_slack_events = set()
+_slack_event_lock = asyncio.Lock()
 
 
 def is_slack_platform() -> bool:
     """Check if the current session is from Slack"""
     return cl.user_session.get("slack_event") is not None
+
+
+async def is_duplicate_slack_event() -> bool:
+    """Check if this Slack event has already been processed"""
+    if not is_slack_platform():
+        return False
+    
+    slack_event = cl.user_session.get("slack_event")
+    if not slack_event:
+        return False
+    
+    # Use event_ts as unique identifier
+    event_id = slack_event.get("event", {}).get("event_ts")
+    if not event_id:
+        return False
+    
+    async with _slack_event_lock:
+        if event_id in _processed_slack_events:
+            logger.warning(f"Duplicate Slack event detected: {event_id}")
+            return True
+        
+        # Add to processed set (keep only last 1000 to prevent memory issues)
+        _processed_slack_events.add(event_id)
+        if len(_processed_slack_events) > 1000:
+            _processed_slack_events.pop()
+    
+    return False
 
 
 async def generate_weather_plots_if_needed(agent, response_message):
@@ -110,6 +142,12 @@ async def chat_profiles():
 async def start():
     """Initialize agent with tool support"""
     try:
+        # Start the scheduler on first chat start (only runs once globally)
+        try:
+            start_scheduler()
+        except Exception as e:
+            logger.error(f"Failed to start scheduler: {e}")
+        
         # Initialize agent with tools
         agent = LocalGPUAgent()
         cl.user_session.set("agent", agent)
@@ -197,6 +235,11 @@ async def main(message: cl.Message):
         
         # Handle Slack-specific features
         if is_slack_platform():
+            # Check for duplicate event (Slack retries)
+            if await is_duplicate_slack_event():
+                logger.info("Ignoring duplicate Slack event")
+                return
+            
             slack_event = cl.user_session.get("slack_event")
             attached_files = message.elements
             if attached_files:
@@ -371,6 +414,28 @@ async def on_chat_resume(thread: ThreadDict):
     # Reinitialize the agent
     agent = LocalGPUAgent()
     cl.user_session.set("agent", agent)
+
+
+# ============================================================================
+# Scheduler Management
+# ============================================================================
+
+def get_scheduler_status():
+    """Get scheduler status information"""
+    scheduler = get_scheduler()
+    if scheduler.is_running:
+        next_run = scheduler.get_next_run_time()
+        return {
+            "running": True,
+            "next_run": str(next_run) if next_run else "Unknown",
+            "channel": scheduler.slack_channel
+        }
+    return {"running": False}
+
+
+# Cleanup on app shutdown
+import atexit
+atexit.register(stop_scheduler)
     
     # Restore message count if available in thread metadata
     message_count = len(thread.get("steps", []))
