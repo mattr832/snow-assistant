@@ -12,12 +12,23 @@ import asyncio
 logger = logging.getLogger(__name__)
 
 
+def is_slack_platform() -> bool:
+    """Check if the current session is from Slack"""
+    return cl.user_session.get("slack_event") is not None
+
+
 async def generate_weather_plots_if_needed(agent, response_message):
     """
     Generate and send weather plots if Stevens Pass weather tools were used.
     This runs in the proper async Chainlit context with access to cl.Plotly.
+    Note: Skips plot generation for Slack as Plotly charts don't render in Slack.
     """
     try:
+        # Skip plots for Slack platform (Plotly doesn't render well in Slack)
+        if is_slack_platform():
+            logger.debug("Skipping plot generation for Slack platform")
+            return
+        
         # Check the agent's last result state to see if Stevens Pass tools were called
         state = getattr(agent, 'last_result_state', None)
         if not state:
@@ -106,6 +117,11 @@ async def start():
         # Initialize message tracking
         cl.user_session.set("message_count", 0)
         
+        # Check if running in Slack mode
+        if is_slack_platform():
+            slack_user = cl.user_session.get("user")
+            logger.info(f"Slack session started for user: {slack_user}")
+        
         # Check Ollama connection - but don't send messages yet to allow starters to show
         if not agent.llm.check_connection():
             # Show error if LLM provider is down
@@ -178,6 +194,13 @@ async def main(message: cl.Message):
     
     try:
         logger.info(f"User: {message.content}")
+        
+        # Handle Slack-specific features
+        if is_slack_platform():
+            slack_event = cl.user_session.get("slack_event")
+            attached_files = message.elements
+            if attached_files:
+                logger.info(f"Received {len(attached_files)} attached files from Slack")
         
         # Get chat history in OpenAI format
         chat_history = cl.chat_context.to_openai()

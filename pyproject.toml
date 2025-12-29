@@ -21,6 +21,7 @@ dependencies = [
     "openai>=1.0.0",
     "plotly>=6.5.0",
     "beautifulsoup4>=4.14.3",
+    "slack-bolt>=1.27.0",
 ]
 
 [build-system]
