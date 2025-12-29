@@ -414,6 +414,12 @@ async def on_chat_resume(thread: ThreadDict):
     # Reinitialize the agent
     agent = LocalGPUAgent()
     cl.user_session.set("agent", agent)
+    
+    # Restore message count if available in thread metadata
+    message_count = len(thread.get("steps", []))
+    cl.user_session.set("message_count", message_count)
+    
+    logger.info(f"Restored chat session with {message_count} messages")
 
 
 # ============================================================================
@@ -436,10 +442,4 @@ def get_scheduler_status():
 # Cleanup on app shutdown
 import atexit
 atexit.register(stop_scheduler)
-    
-    # Restore message count if available in thread metadata
-    message_count = len(thread.get("steps", []))
-    cl.user_session.set("message_count", message_count)
-    
-    logger.info(f"Restored chat session with {message_count} messages")
 
