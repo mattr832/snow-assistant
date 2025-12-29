@@ -137,7 +137,7 @@ async def set_starters():
     """Set starter prompts for quick access to common queries"""
     return [
         cl.Starter(
-            label="📊 Analyze Snow Forecast",
+            label="❄️ Analyze Snow Forecast",
             message="Analyze the snow forecast for Stevens Pass",
             icon="",
         ),
@@ -147,7 +147,12 @@ async def set_starters():
             icon="",
         ),
         cl.Starter(
-            label="📋 Forecast Discussion",
+            label="🏔️ Road Conditions",
+            message="What are the current road conditions and pass status for Stevens Pass?",
+            icon="",
+        ),
+        cl.Starter(
+            label="⛅ Forecast Discussion",
             message="Get the NOAA Area Forecast Discussion for the Cascades",
             icon="",
         ),

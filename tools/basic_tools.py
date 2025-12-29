@@ -867,14 +867,6 @@ def get_comprehensive_stevens_pass_data() -> str:
             except Exception as e:
                 logger.warning(f"Could not fetch alerts: {e}")
         
-        # 6. Get NWAC avalanche forecast information
-        logger.info("Including NWAC avalanche forecast link")
-        try:
-            nwac_info = get_nwac_avalanche_forecast("stevens-pass")
-            data_sections.append(f"\n{nwac_info}")
-        except Exception as e:
-            logger.warning(f"Could not include NWAC avalanche forecast: {e}")
-        
         result = "\n".join(data_sections)
         logger.info("Successfully retrieved comprehensive Stevens Pass data")
         return result
@@ -1087,14 +1079,33 @@ Post: {post_title}
 Source: {latest_post_url}
 """
         
+        # Add sections if found, otherwise include raw content
+        sections_found = False
+        
         if short_term_section:
             poobah_context += f"\nSHORT TERM FORECAST:\n{short_term_section}\n"
+            sections_found = True
         
         if highlights_section:
             poobah_context += f"\nHIGHLIGHTS:\n{highlights_section}\n"
+            sections_found = True
         
         if extended_outlook_section:
             poobah_context += f"\nEXTENDED OUTLOOK:\n{extended_outlook_section}\n"
+            sections_found = True
+        
+        # If no sections found, include first 2000 chars of raw content as fallback
+        if not sections_found and post_text:
+            # Clean up the text - remove newsletter/sponsor sections
+            clean_text = post_text
+            for remove_phrase in ['FORWARD THIS', 'Subscribe', 'RIDDLE', 'DAILY DOSE', 'Recent Posts', 'THE PERFECT GIFT', 'Michael Fagin', 'Meteorologist']:
+                if remove_phrase in clean_text:
+                    clean_text = clean_text.split(remove_phrase)[0]
+            
+            if len(clean_text) > 200:
+                poobah_context += f"\nFORECAST CONTENT:\n{clean_text[:2000].strip()}\n"
+                if len(clean_text) > 2000:
+                    poobah_context += "\n[Content truncated for brevity]\n"
         
         poobah_context += f"\n{'='*70}\n"
         
@@ -1115,120 +1126,73 @@ def analyze_snow_forecast_for_stevens_pass() -> str:
     Retrieve and analyze comprehensive NOAA data to highlight snow, blizzards, and large forecast 
     snow amounts in Cascade mountains, particularly Stevens Pass. Integrates multiple data sources
     including raw grid data for detailed analysis, plus professional forecaster insights from Powder Poobah.
+    
+    Optimized to minimize duplicate API calls and parallelize independent data fetching.
     """
     try:
         import re
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+        
         session = _create_session_with_retries()
         timeout = 30
         
         # Collect all available data
-        logger.info("Collecting comprehensive Stevens Pass data for analysis...")
+        logger.info("=" * 70)
+        logger.info("Stevens Pass Comprehensive Analysis - Data Collection")
+        logger.info("=" * 70)
         
         data_parts = []
         
-        # Part 0: Get professional forecaster context from Powder Poobah
-        logger.info("0. Fetching professional forecaster insights from Powder Poobah")
-        poobah_context = get_powder_poobah_latest_forecast()
-        poobah_short_term = ""
-        poobah_highlights = ""
-        poobah_extended = ""
-        poobah_source = ""
-        poobah_title = ""
+        # Part 1: Fetch detailed Stevens Pass data using helper (eliminates duplicate API calls)
+        logger.info("[1/3] Fetching NOAA data (grid, forecast, alerts)...")
+        detailed_data = _fetch_stevens_pass_detailed_data()
+        grid_data_for_plots = detailed_data.get("grid_data")
         
-        if poobah_context:
-            data_parts.append(poobah_context)
-            
-            # Extract individual sections from Powder Poobah for injection into prompt
-            logger.info("Extracting Powder Poobah forecast sections for analysis injection")
-            
-            # Extract title/post name
-            title_match = re.search(r'Post:\s*(.+?)(?:\n|$)', poobah_context)
-            if title_match:
-                poobah_title = title_match.group(1).strip()
-            
-            # Extract source URL
-            source_match = re.search(r'Source:\s*(.+?)(?:\n|$)', poobah_context)
-            if source_match:
-                poobah_source = source_match.group(1).strip()
-            
-            # Extract SHORT TERM FORECAST section
-            short_match = re.search(
-                r'SHORT\s+TERM\s+FORECAST:\s*\n(.*?)(?=\nHIGHLIGHTS|\nEXTENDED|={10})',
-                poobah_context,
-                re.IGNORECASE | re.DOTALL
-            )
-            if short_match:
-                poobah_short_term = short_match.group(1).strip()
-            
-            # Extract HIGHLIGHTS section
-            highlight_match = re.search(
-                r'HIGHLIGHTS:\s*\n(.*?)(?=\nEXTENDED|={10})',
-                poobah_context,
-                re.IGNORECASE | re.DOTALL
-            )
-            if highlight_match:
-                poobah_highlights = highlight_match.group(1).strip()
-            
-            # Extract EXTENDED OUTLOOK section
-            extended_match = re.search(
-                r'EXTENDED\s+OUTLOOK:\s*\n(.*?)(?=\n={10})',
-                poobah_context,
-                re.IGNORECASE | re.DOTALL
-            )
-            if extended_match:
-                poobah_extended = extended_match.group(1).strip()
-        
-        # Part 1: Get comprehensive weather data
-        logger.info("1. Fetching comprehensive Stevens Pass weather data")
+        # Format the comprehensive data from detailed fetch
         comprehensive_data = get_comprehensive_stevens_pass_data()
         data_parts.append(comprehensive_data)
         
-        # Part 1B: Fetch and include detailed grid data
-        logger.info("1B. Fetching detailed grid forecast data for LLM analysis")
-        grid_data_for_plots = None
-        try:
-            # Stevens Pass coordinates
-            latitude = 47.7462
-            longitude = -121.0859
-            
-            points_url = f"https://api.weather.gov/points/{latitude},{longitude}"
-            points_response = session.get(points_url, timeout=timeout)
-            points_response.raise_for_status()
-            points_data = points_response.json()
-            
-            forecast_grid_url = points_data.get("properties", {}).get("forecastGridData")
-            if forecast_grid_url:
-                grid_response = session.get(forecast_grid_url, timeout=timeout)
-                grid_response.raise_for_status()
-                grid_data = grid_response.json()
-                grid_data_for_plots = grid_data  # Save for plotting later
-                
-                # Format grid data for LLM analysis
-                grid_summary = _format_grid_data_for_analysis(grid_data)
+        # Format grid data for LLM analysis
+        if grid_data_for_plots:
+            try:
+                grid_summary = _format_grid_data_for_analysis(grid_data_for_plots)
                 if grid_summary:
                     data_parts.append(f"\n\n{grid_summary}")
-                    logger.info("✓ Detailed grid data extracted and formatted")
-        except Exception as e:
-            logger.warning(f"Could not fetch/format detailed grid data: {e}")
+            except Exception as e:
+                logger.warning(f"Grid data formatting failed: {e}")
         
-        # Part 2: Get NWAC avalanche forecast
-        logger.info("2. Fetching NWAC avalanche forecast for safety information")
-        try:
-            nwac_forecast = get_nwac_avalanche_forecast("stevens-pass")
-            if nwac_forecast:
-                data_parts.append(f"\n\n{nwac_forecast}")
-                logger.info("✓ NWAC avalanche forecast included")
-        except Exception as e:
-            logger.warning(f"Could not fetch NWAC avalanche forecast: {e}")
+        # Part 2: Fetch independent data sources in parallel for efficiency
+        logger.info("[2/3] Fetching additional sources (Powder Poobah, NWAC, WSDOT, AFDs)...")
         
-        # Part 3: Get BOTH full AFD texts for detailed analysis
-        logger.info("3. Fetching BOTH AFDs for detailed analysis")
-        wfo_afds = [
-            ("OTX", "https://api.weather.gov/products/types/AFD/locations/OTX", "Spokane/East Cascades"),
-            ("SEW", "https://api.weather.gov/products/types/AFD/locations/SEW", "Seattle/West Cascades"),
-        ]
+        def fetch_powder_poobah():
+            """Fetch Powder Poobah forecast"""
+            try:
+                result = get_powder_poobah_latest_forecast()
+                return ("poobah", result)
+            except Exception as e:
+                logger.debug(f"Powder Poobah fetch failed: {e}")
+                return ("poobah", "")
         
-        for wfo_code, afd_url, region_desc in wfo_afds:
+        def fetch_nwac():
+            """Fetch NWAC avalanche forecast"""
+            try:
+                result = get_nwac_avalanche_forecast("stevens-pass")
+                return ("nwac", result)
+            except Exception as e:
+                logger.debug(f"NWAC fetch failed: {e}")
+                return ("nwac", "")
+        
+        def fetch_wsdot():
+            """Fetch WSDOT pass conditions"""
+            try:
+                result = get_wsdot_mountain_pass_conditions("stevens")
+                return ("wsdot", result)
+            except Exception as e:
+                logger.debug(f"WSDOT fetch failed: {e}")
+                return ("wsdot", "")
+        
+        def fetch_afd(wfo_code, afd_url, region_desc):
+            """Fetch a single AFD"""
             try:
                 afd_response = session.get(afd_url, timeout=timeout)
                 afd_response.raise_for_status()
@@ -1248,9 +1212,66 @@ def analyze_snow_forecast_for_stevens_pass() -> str:
                         issued_time = product_data.get("issuanceTime", "Unknown")
                         
                         if afd_full_text:
-                            data_parts.append(f"\n\n{'='*70}\nFull AFD Discussion - {wfo_code} ({region_desc})\nIssued: {issued_time}\n{'='*70}\n{afd_full_text}")
+                            return ("afd", f"\n\n{'='*70}\nFull AFD Discussion - {wfo_code} ({region_desc})\nIssued: {issued_time}\n{'='*70}\n{afd_full_text}")
+                
+                return ("afd", "")
             except Exception as e:
-                logger.warning(f"Could not fetch full {wfo_code} AFD: {e}")
+                logger.debug(f"{wfo_code} AFD fetch failed: {e}")
+                return ("afd", "")
+        
+        # Execute all fetches in parallel
+        with ThreadPoolExecutor(max_workers=6) as executor:
+            futures = []
+            
+            # Submit all independent fetch tasks
+            futures.append(executor.submit(fetch_powder_poobah))
+            futures.append(executor.submit(fetch_nwac))
+            futures.append(executor.submit(fetch_wsdot))
+            futures.append(executor.submit(fetch_afd, "OTX", "https://api.weather.gov/products/types/AFD/locations/OTX", "Spokane/East Cascades"))
+            futures.append(executor.submit(fetch_afd, "SEW", "https://api.weather.gov/products/types/AFD/locations/SEW", "Seattle/West Cascades"))
+            
+            # Collect results as they complete
+            results = {}
+            afd_results = []
+            for future in as_completed(futures):
+                try:
+                    data_type, content = future.result()
+                    if data_type == "afd":
+                        if content:
+                            afd_results.append(content)
+                    else:
+                        results[data_type] = content
+                except Exception as e:
+                    logger.warning(f"Parallel fetch error: {e}")
+        
+        # Log fetch summary
+        fetch_status = []
+        if results.get("poobah"): fetch_status.append("Powder Poobah")
+        if results.get("nwac"): fetch_status.append("NWAC")
+        if results.get("wsdot"): fetch_status.append("WSDOT")
+        if afd_results: fetch_status.append(f"{len(afd_results)} AFDs")
+        
+        logger.info(f"    ✓ Retrieved: {', '.join(fetch_status) if fetch_status else 'None'}")
+        
+        # Append results in logical order
+        # Add Powder Poobah first (professional context)
+        poobah_content = results.get("poobah", "")
+        if poobah_content and len(poobah_content.strip()) > 200:  # Ensure we have actual content
+            data_parts.append(poobah_content)
+        
+        # Add NWAC avalanche forecast
+        nwac_content = results.get("nwac", "")
+        if nwac_content:
+            data_parts.append(f"\n\n{nwac_content}")
+        
+        # Add both AFDs
+        for afd_content in afd_results:
+            data_parts.append(afd_content)
+        
+        # Add WSDOT pass conditions
+        wsdot_content = results.get("wsdot", "")
+        if wsdot_content:
+            data_parts.append(f"\n\n{wsdot_content}")
         
         combined_data = "\n".join(data_parts)
         
@@ -1261,155 +1282,74 @@ def analyze_snow_forecast_for_stevens_pass() -> str:
         from models.local_llm import UnifiedLLM
         llm = UnifiedLLM()
         
+        logger.info("[3/3] Analyzing data with LLM...")
+        
         # Create comprehensive analysis prompt focused on winter sports opportunities
         # Now includes detailed grid data extraction directives AND professional forecaster insights
-        analysis_prompt = f"""You are analyzing Stevens Pass weather data for winter sports enthusiasts (skiing/snowboarding). Your analysis must be STRICTLY DATA-DRIVEN using only the provided information.
+        analysis_prompt = f"""You are a winter sports weather analyst for Stevens Pass. Analyze the provided data with STRICT accuracy - only report what is explicitly stated in the data below. Do not assume, speculate, or fabricate any information.
 
-═══════════════════════════════════════════════════════════════════════════
-DATA SOURCES PROVIDED
-═══════════════════════════════════════════════════════════════════════════
+## CRITICAL RULES
+- Use exact numbers from data (e.g., "4.2 inches" not "around 4")
+- Cite which source each insight comes from
+- State "Data not available" if unclear or missing
+- Powder day = 9+ inches in 24 hours only
 
-You have access to the following authoritative data sources:
+## DATA SOURCES AVAILABLE
+1. **NOAA Grid Data**: Hourly snowfall amounts, temperatures, wind, visibility
+2. **NOAA AFD** (OTX/SEW): Professional meteorologist analysis & model discussions  
+3. **Powder Poobah**: Expert PNW snow forecaster insights
+4. **NWAC**: Avalanche danger ratings & backcountry safety
+5. **WSDOT** (PRIMARY for travel): Real-time WA state road conditions, pass status, restrictions, closures, delays, advisories
+6. **Weather Alerts**: Active warnings/watches/advisories
 
-1. **NOAA Forecast Grid Data** - Hourly/detailed predictions including:
-   - Snowfall amounts (inches) with precise timing
-   - Precipitation amounts and types
-   - Temperature trends (actual, high, low, apparent)
-   - Wind speed, gusts, and direction
-   - Visibility conditions
-   - Humidity and dewpoint
+## YOUR TASK
+Synthesize the data into a comprehensive forecast covering:
 
-2. **NWAC Avalanche Forecast** - Northwest Avalanche Center safety information:
-   - Link to current avalanche danger ratings by elevation
-   - Essential backcountry safety gear checklist
-   - Terrain selection guidelines and red flags
-   - Important for assessing backcountry skiing/riding conditions
+**1. SNOWFALL** - Extract all events with exact amounts/timing from NOAA grid; identify 9+ inch periods; compare with Powder Poobah & AFD
 
-3. **NOAA Area Forecast Discussions (AFD)** - Professional meteorologist analysis from:
-   - OTX (Spokane/East Cascades)
-   - SEW (Seattle/West Cascades)
-   These contain synoptic pattern analysis, model discussions, and forecaster confidence
+**2. SNOW QUALITY** - Temperature during snowfall (cold=powder, warm=heavy); wind speeds; expert assessments from Poobah/AFD
 
-4. **Powder Poobah Professional Forecast** - Expert Pacific Northwest snow forecaster
-   (See full forecast details in the OFFICIAL DATA section below)
+**3. TIMING** - Next 48hrs: hour-by-hour breakdown; Days 3-7: daily summary; weekday vs weekend opportunities
 
-5. **Weather Alerts** - Active warnings, watches, and advisories
+**4. CONDITIONS** - Wind/visibility/temps from grid data; mountain impacts; expert commentary
 
-═══════════════════════════════════════════════════════════════════════════
-STRICT ANALYSIS RULES
-═══════════════════════════════════════════════════════════════════════════
+**5. ACCESS (CRITICAL)** - WSDOT is PRIMARY source for travel info. REQUIRED: Report exact WSDOT data: pass open/closed status, eastbound/westbound restrictions, chain requirements, current temp/weather/road surface, travel advisories. ⚠️ EMPHASIZE any closures, delays, or restricted access prominently. Make clear verdict: Can riders reach the mountain?
 
-**CRITICAL - You MUST follow these rules:**
+**6. SAFETY** - Active alerts; NWAC avalanche info; backcountry hazards (NOTE: NWAC doesn't apply to ski areas); AFD warnings
 
-1. **NO ASSUMPTIONS**: Only report what is explicitly stated in the data
-2. **NO SPECULATION**: If data is missing or unclear, state "Data not available" 
-3. **NO FABRICATION**: Do not create snowfall amounts, temperatures, or conditions
-4. **CITE SOURCES**: Reference which data source each insight comes from
-5. **EXACT NUMBERS**: Use precise values from the data (e.g., "4.2 inches" not "around 4 inches")
-6. **POWDER DAY DEFINITION**: Only classify as powder day when data shows 9+ inches in 24 hours
+**7. RECONCILIATION** - Compare Powder Poobah vs NOAA vs AFD; where sources agree/differ; confidence levels
 
-═══════════════════════════════════════════════════════════════════════════
-YOUR ANALYSIS TASK
-═══════════════════════════════════════════════════════════════════════════
+**8. BOTTOM LINE** - Near-term (48hr) actionable recommendations including road access; extended (3-7 day) outlook; best windows
 
-Synthesize the data below into a comprehensive winter sports forecast. Your analysis should:
+## OUTPUT FORMAT
+**SNOWFALL FORECAST** - Exact amounts, timing, classification
 
-**1. SNOWFALL SUMMARY** (Primary Focus)
-   - Extract ALL snowfall events from NOAA grid data with exact amounts and timing
-   - Identify any 24-hour periods with 9+ inches (powder day threshold)
-   - Note what Powder Poobah says about snowfall - does it align with NOAA?
-   - Report any AFD discussion about precipitation intensity or snow levels
+**SNOW QUALITY & CONDITIONS** - Temps, wind, visibility during snow events
 
-**2. SNOW QUALITY INDICATORS**
-   - Temperature during snow events (cold = dry powder, warm = wet/heavy)
-   - Wind speeds during snowfall (high winds = wind-affected snow)
-   - What does Powder Poobah assess about snow quality?
-   - Any AFD mention of snow ratios, density, or elevation-dependent factors
+**NEAR-TERM (48 Hours)** - Hour-by-hour/period-by-period breakdown
 
-**3. TIMING & WINDOWS**
-   - IMMEDIATE (Next 48 Hours): Detailed hour-by-hour or period-by-period breakdown
-   - EXTENDED (3-7 Days): Day-by-day summary of conditions
-   - When does snow start/stop according to grid data?
-   - Weekday vs weekend breakdown from the forecast periods
-   - What timing does Powder Poobah emphasize?
-   - Any AFD discussion about system timing or confidence
+**EXTENDED (Days 3-7)** - Daily conditions summary
 
-**4. MOUNTAIN CONDITIONS**
-   - Wind: Exact speeds/gusts from grid data - impact on riding conditions
-   - Visibility: Actual values from grid data
-   - Temperature trends: Actual highs/lows from grid data
-   - What does Powder Poobah say about mountain conditions?
+**TRAVEL CONSIDERATIONS** - Lead with WSDOT real-time data: pass status, restrictions (both directions), chain requirements, road surface, advisories. ⚠️ HIGHLIGHT any closures/delays/restricted access at top of section. Final verdict: Is the mountain accessible?
 
-**5. HAZARDS & SAFETY CONDITIONS**
-   - Active alerts from weather data
-   - NWAC avalanche forecast link and key safety information
-   - Backcountry vs resort considerations (NWAC data does NOT apply to ski areas)
-   - Any AFD mention of hazardous conditions, road closures, chain requirements
-   - What does Powder Poobah warn about?
+**SAFETY & HAZARDS** - Avalanche info, alerts, warnings
 
-**6. FORECAST RECONCILIATION** (Critical Analysis)
-   - Compare Powder Poobah's assessment with NOAA grid data
-   - Compare AFD forecaster discussion with grid data
-   - Where do sources agree? Where do they differ?
-   - Which sources show higher/lower confidence?
+**EXPERT RECONCILIATION** - How sources align/differ
 
-**7. WINTER SPORTS BOTTOM LINE**
-   - NEAR-TERM OUTLOOK (Next 48 Hours): Specific riding recommendations
-   - EXTENDED OUTLOOK (3-7 Days): Multi-day conditions and best opportunities
-   - Summarize rideable conditions based strictly on the data
-   - Highlight best days/windows according to the data
-   - Note any data gaps or uncertainties
+**BOTTOM LINE**  
+• Next 48hrs: [specific recommendations + road access reality]  
+• Days 3-7: [multi-day outlook]
 
-═══════════════════════════════════════════════════════════════════════════
+Tone: Professional, data-driven, enthusiastic but honest | Audience: Experienced riders | Max 1300 words
+
+════════════════════════════════════════════════════════════════════════════════
 OFFICIAL DATA
-═══════════════════════════════════════════════════════════════════════════
+════════════════════════════════════════════════════════════════════════════════
 
-{combined_data}
+{combined_data}"""
 
-═══════════════════════════════════════════════════════════════════════════
-OUTPUT FORMAT
-═══════════════════════════════════════════════════════════════════════════
-
-Structure your response as:
-
-**SNOWFALL FORECAST**
-[Exact amounts, timing, and classification from data]
-
-**SNOW QUALITY & CONDITIONS**  
-[Temperature, wind, visibility from data sources]
-
-**NEAR-TERM FORECAST (Next 48 Hours)**
-[Detailed period-by-period or hour-by-hour breakdown of conditions, snowfall, and riding opportunities]
-
-**EXTENDED FORECAST (Days 3-7)**
-[Day-by-day summary of conditions and snow potential]
-
-**AVALANCHE & SAFETY CONDITIONS**
-[NWAC avalanche forecast link, backcountry safety reminders, and essential gear]
-
-**HAZARDS & ADVISORIES**
-[Weather warnings, pass conditions from alerts/AFD]
-
-**EXPERT INSIGHTS RECONCILIATION**
-[How Powder Poobah aligns with or differs from NOAA data]
-
-**BOTTOM LINE FOR WINTER SPORTS**
-- Near-Term (48 Hours): [Specific actionable recommendations]
-- Extended (3-7 Days): [Multi-day outlook and best opportunities]
-
-═══════════════════════════════════════════════════════════════════════════
-
-**TONE**: Professional, factual, enthusiastic about powder but honest about conditions
-**AUDIENCE**: Experienced winter sports enthusiasts who value accurate data
-**LENGTH**: Maximum 1300 words
-**REMINDER**: Use ONLY the data provided above. Do not assume or fabricate information."""
-
-        logger.info("Analyzing comprehensive data for snow forecast (including detailed grid data)")
-        
         # Save the prompt for inspection before sending to LLM
         prompt_filepath = _save_analysis_prompt(analysis_prompt)
-        if prompt_filepath:
-            logger.info(f"Saved analysis prompt to: {prompt_filepath}")
         
         analysis_chunks = []
         for chunk in llm.generate_stream(analysis_prompt):
@@ -1420,13 +1360,32 @@ Structure your response as:
         # NOTE: Plot generation moved to app.py for proper async context
         # Signal that plots should be generated by including metadata
         
+        # Build metadata for validation/testing
+        data_sources_fetched = {
+            "noaa_grid": grid_data_for_plots is not None,
+            "powder_poobah": bool(results.get("poobah")),
+            "nwac": bool(results.get("nwac")),
+            "wsdot": bool(results.get("wsdot")),
+            "afd_count": len(afd_results),
+        }
+        
+        # Log fetch summary for testing
+        logger.info(f"Data fetch summary: NOAA={'✓' if data_sources_fetched['noaa_grid'] else '✗'}, "
+                   f"Poobah={'✓' if data_sources_fetched['powder_poobah'] else '✗'}, "
+                   f"NWAC={'✓' if data_sources_fetched['nwac'] else '✗'}, "
+                   f"WSDOT={'✓' if data_sources_fetched['wsdot'] else '✗'}, "
+                   f"AFDs={data_sources_fetched['afd_count']}")
+        
+        logger.info("=" * 70)
+        logger.info("Analysis Complete")
+        logger.info("=" * 70)
+        
         result = f"❄️ **Comprehensive Stevens Pass Snow & Weather Analysis**\n\n"
         result += f"*Generated: {datetime.now().strftime('%Y-%m-%d %H:%M UTC')}*\n"
         result += f"*Data Source: NOAA Weather API (Forecast Grid Data) + Area Forecast Discussion*\n\n"
         result += "="*70 + "\n\n"
         result += analysis
         
-        logger.info("Successfully analyzed comprehensive Stevens Pass data with detailed grid information")
         return result
         
     except requests.exceptions.RequestException as e:
@@ -1633,6 +1592,138 @@ The Northwest Avalanche Center provides daily forecasts with danger ratings, ava
 problems, and travel advice at nwac.us."""
 
 
+def get_wsdot_mountain_pass_conditions(pass_name: str = "stevens") -> str:
+    """
+    [TOOL]
+    Get current road conditions, restrictions, and weather for Washington State mountain passes.
+    Retrieves real-time data from WSDOT including closures, travel advisories, temperature,
+    and road conditions.
+    
+    Args:
+        pass_name: Pass to check (default: "stevens"). Options: "stevens", "snoqualmie", "white", "all"
+        
+    Returns:
+        Formatted string with pass conditions, restrictions, temperature, and advisories
+    """
+    try:
+        import os
+        access_code = os.getenv("WSDOT_ACCESS_CODE")
+        if not access_code:
+            return "Error: WSDOT_ACCESS_CODE not found in environment variables"
+        
+        api_url = f"http://www.wsdot.wa.gov/Traffic/api/MountainPassConditions/MountainPassConditionsREST.svc/GetMountainPassConditionsAsJson?AccessCode={access_code}"
+        
+        logger.info(f"Fetching WSDOT mountain pass conditions for: {pass_name}")
+        
+        session = _create_session_with_retries()
+        response = session.get(api_url, timeout=15)
+        response.raise_for_status()
+        data = response.json()
+        
+        # Map pass names to WSDOT IDs
+        pass_mapping = {
+            "stevens": "Stevens Pass US 2",
+            "snoqualmie": "Snoqualmie Pass I-90",
+            "white": "White Pass US 12",
+            "chinook": "Chinook Pass SR 410",
+            "blewett": "Blewett Pass US 97",
+        }
+        
+        # Filter passes based on request
+        passes_to_show = []
+        if pass_name.lower() == "all":
+            passes_to_show = data
+        else:
+            target_name = pass_mapping.get(pass_name.lower())
+            if target_name:
+                passes_to_show = [p for p in data if target_name.lower() in p.get("MountainPassName", "").lower()]
+            else:
+                # Fallback: search by partial name match
+                passes_to_show = [p for p in data if pass_name.lower() in p.get("MountainPassName", "").lower()]
+        
+        if not passes_to_show:
+            return f"No pass conditions found for '{pass_name}'. Try: stevens, snoqualmie, white, or 'all'"
+        
+        # Format the results
+        result_lines = []
+        result_lines.append("🚗 **WSDOT Mountain Pass Conditions**")
+        result_lines.append("=" * 70)
+        result_lines.append("")
+        
+        for pass_data in passes_to_show:
+            pass_full_name = pass_data.get("MountainPassName", "Unknown Pass")
+            elevation = pass_data.get("ElevationInFeet", "N/A")
+            temp = pass_data.get("TemperatureInFahrenheit")
+            weather = pass_data.get("WeatherCondition", "N/A")
+            road_condition = pass_data.get("RoadCondition", "No information available")
+            travel_advisory = pass_data.get("TravelAdvisoryActive", False)
+            
+            # Parse date updated
+            date_updated = pass_data.get("DateUpdated", "")
+            if date_updated:
+                # WSDOT format: /Date(1765784463873-0800)/
+                import re
+                match = re.search(r'/Date\((\d+)', date_updated)
+                if match:
+                    timestamp_ms = int(match.group(1))
+                    from datetime import datetime
+                    dt = datetime.fromtimestamp(timestamp_ms / 1000)
+                    date_updated = dt.strftime("%Y-%m-%d %I:%M %p")
+            
+            result_lines.append(f"📍 **{pass_full_name}**")
+            result_lines.append(f"   Elevation: {elevation:,} ft")
+            if temp is not None:
+                result_lines.append(f"   Temperature: {temp}°F")
+            result_lines.append(f"   Weather: {weather}")
+            result_lines.append(f"   Last Updated: {date_updated}")
+            result_lines.append("")
+            
+            # Restrictions
+            restriction_one = pass_data.get("RestrictionOne", {})
+            restriction_two = pass_data.get("RestrictionTwo", {})
+            
+            if restriction_one or restriction_two:
+                result_lines.append("   **Restrictions:**")
+                if restriction_one and restriction_one.get("RestrictionText"):
+                    direction = restriction_one.get("TravelDirection", "")
+                    text = restriction_one.get("RestrictionText", "")
+                    result_lines.append(f"   • {direction}: {text}")
+                if restriction_two and restriction_two.get("RestrictionText"):
+                    direction = restriction_two.get("TravelDirection", "")
+                    text = restriction_two.get("RestrictionText", "")
+                    result_lines.append(f"   • {direction}: {text}")
+                result_lines.append("")
+            
+            # Road conditions
+            result_lines.append(f"   **Road Conditions:**")
+            result_lines.append(f"   {road_condition}")
+            result_lines.append("")
+            
+            # Travel advisory
+            if travel_advisory:
+                result_lines.append("   ⚠️ **TRAVEL ADVISORY ACTIVE**")
+                result_lines.append("")
+            
+            result_lines.append("-" * 70)
+            result_lines.append("")
+        
+        result_lines.append("🔗 **More Information:**")
+        result_lines.append("   WSDOT Mountain Pass Report: https://wsdot.wa.gov/travel/real-time/mountainpasses")
+        result_lines.append("   Mountain Pass Cameras: https://wsdot.wa.gov/travel/real-time/mountainpasses")
+        result_lines.append("")
+        result_lines.append("=" * 70)
+        
+        logger.info(f"Successfully retrieved WSDOT conditions for {len(passes_to_show)} pass(es)")
+        return "\n".join(result_lines)
+        
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Error fetching WSDOT pass conditions: {e}")
+        return f"Error fetching WSDOT mountain pass conditions: {str(e)}\nPlease try again or visit https://wsdot.wa.gov/travel/real-time/mountainpasses"
+    except Exception as e:
+        logger.error(f"Unexpected error in get_wsdot_mountain_pass_conditions: {e}", exc_info=True)
+        return f"Error processing WSDOT pass conditions: {str(e)}"
+
+
 # ============================================================================
 # TOOL DEFINITIONS - Functions callable by the agent
 # ============================================================================
@@ -1648,13 +1739,13 @@ tools = [
     Tool(
         name="nwac_avalanche_forecast",
         func=get_nwac_avalanche_forecast,
-        description="Get the current avalanche forecast from Northwest Avalanche Center (NWAC) for Stevens Pass and surrounding areas. Includes danger ratings by elevation, forecast discussion, weather summary, and safety information. NO parameters needed - use empty input {}.",
+        description="Get current avalanche forecast from Northwest Avalanche Center (NWAC). Returns: danger ratings (upper/middle/lower elevations), Bottom Line summary, detailed forecast discussion, weather conditions, and backcountry safety information. OPTIONAL parameter: 'zone' (default: 'stevens-pass'). Available zones: 'stevens-pass', 'mt-baker', 'snoqualmie-pass', 'washington-pass', 'mt-rainier', 'white-pass', 'olympics'. Use {} for Stevens Pass default or {'zone': 'mt-baker'} for other areas.",
     ),
 
     Tool(
         name="noaa_area_forecast_discussion",
         func=get_noaa_area_forecast_discussion,
-        description="Get latest NOAA Area Forecast Discussions (AFD) for Cascades from both OTX (Spokane/East) and SEW (Seattle/West) WFOs. NO parameters needed - use empty input {}.",
+        description="Get professional meteorologist analysis from NOAA Area Forecast Discussions (AFD) covering both sides of Cascades. Returns: synoptic pattern analysis, model discussions, forecaster confidence levels, system timing, and technical weather insights from OTX (Spokane/East Cascades) and SEW (Seattle/West Cascades) offices. Useful for understanding weather patterns, forecast uncertainty, and detailed meteorological reasoning. NO parameters needed - use empty input {}.",
     ),
     Tool(
         name="powder_poobah_forecast",
@@ -1664,12 +1755,17 @@ tools = [
     Tool(
         name="stevens_pass_comprehensive_weather",
         func=get_comprehensive_stevens_pass_data,
-        description="Get comprehensive Stevens Pass weather data including forecast, precipitation, wind, visibility, and alerts from NOAA. NO parameters needed - use empty input {}.",
+        description="Get comprehensive NOAA weather data for Stevens Pass (Tye Mill, 5180ft elevation). Returns: 14-period text forecast, hourly grid data with snowfall amounts/timing, temperature trends, wind speed/gusts, precipitation, visibility, humidity, and active weather alerts. Best for general weather overview without detailed analysis. NO parameters needed - use empty input {}.",
     ),
     Tool(
         name="stevens_pass_snow_analysis",
         func=analyze_snow_forecast_for_stevens_pass,
-        description="Detailed snow forecast analysis for Stevens Pass combining NOAA data, AFD, Powder Poobah forecasts. Highlights snowfall amounts, timing, quality, and riding conditions. NO parameters needed - use empty input {}.",
+        description="PREMIUM comprehensive analysis tool combining ALL sources: NOAA grid data, AFD meteorologist discussions, Powder Poobah expert forecast, NWAC avalanche info, and WSDOT road conditions. Returns: AI-synthesized analysis covering snowfall amounts/timing, snow quality assessment, powder day identification (9+ inches), timing windows, mountain conditions, road access, hazards, and winter sports bottom line. Use this when user asks for complete analysis or snow forecast assessment. Takes ~30 seconds. NO parameters needed - use empty input {}.",
+    ),
+    Tool(
+        name="wsdot_pass_conditions",
+        func=get_wsdot_mountain_pass_conditions,
+        description="Get REAL-TIME road conditions from Washington State DOT for mountain passes. Returns: pass open/closed status, eastbound/westbound restrictions (chains required, traction tires, etc.), current temperature/weather at pass elevation, road surface conditions, travel advisories, closures, delays, and expected changes. CRITICAL for determining if mountain is accessible. Use this when user asks about road conditions, driving, pass status, or 'can I get there'. OPTIONAL parameter: 'pass_name' (default: 'stevens'). Options: 'stevens', 'snoqualmie', 'white', 'chinook', 'blewett', 'all'. Example: {} for Stevens Pass or {'pass_name': 'snoqualmie'} for Snoqualmie Pass.",
     ),
     Tool(
         name="stevens_pass_weather_plots",
